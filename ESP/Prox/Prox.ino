@@ -1,13 +1,15 @@
 #include <NewPing.h>
 
-int trigPin = 6;
-int echoPin = 5;
-int maxDistance = 15;
+#define trigPin 27
+#define echoPin 26
+#define maxDistance 200
 NewPing sonar(trigPin, echoPin, maxDistance);
 
 void setup() {
   Serial.begin(115200);
   delay(50);
+  pinMode(trigPin,OUTPUT);
+  pinMode(echoPin,INPUT);
 }
 
 void loop() {

@@ -31,6 +31,47 @@ void move(int m1, int m2, bool p){
   digitalWrite(m2, p ? LOW:HIGH);
 }
 
+// void movement(int in[]){
+//   digitalWrite(LS, HIGH);
+//   digitalWrite(RS, HIGH);
+//   //left right up down
+//   //up
+//   if(in[2] > in[3]){
+//     //left
+//     if(in[0] > in[1]){
+//       move(L1, L2, in[2]>in[0] ? 1:0);
+//       move(R1, R2, 1);
+//       Serial.printf("LP = %d",abs(in[2]-in[0]));
+//       analogWrite(LP, abs(in[2]-in[0]));
+//       analogWrite(RP, sqrt((in[2]*in[2])+(in[0]*in[0])));
+//     //right
+//     }else{
+//       move(L1, L2, 1);
+//       move(R1, R2, in[2]>in[1] ? 1:0);
+//       Serial.printf("LP = %d", abs(in[2]-in[0]));
+//       analogWrite(LP, sqrt((in[2]*in[2])+(in[1]*in[1])));
+//       analogWrite(RP, abs(in[2]-in[1]));
+//     }
+//   //down
+//   }else{
+//     //left
+//     if(in[0] > in[1]){
+//       move(L1, L2, 0);
+//       move(R1, R2, in[3]>in[0] ? 0:1);
+//       Serial.printf("LP = %d",abs(in[3]-in[0]));
+//       analogWrite(LP, abs(in[3]-in[0]));
+//       analogWrite(RP, sqrt((in[3]*in[3])+(in[0]*in[0])));
+//     //right
+//     }else{
+//       move(L1, L2, in[3]>in[1] ? 0:1);
+//       move(R1, R2, 0);
+//       Serial.printf("LP = %d",abs(in[3]-in[1]));
+//       analogWrite(LP, sqrt((in[3]*in[3])+(in[1]*in[1])));
+//       analogWrite(RP, abs(in[3]-in[1]));
+//     }
+//   }
+// }
+
 void movement(int in[]){
   digitalWrite(LS, HIGH);
   digitalWrite(RS, HIGH);
@@ -41,14 +82,12 @@ void movement(int in[]){
     if(in[0] > in[1]){
       move(L1, L2, in[2]>in[0] ? 1:0);
       move(R1, R2, 1);
-      Serial.printf("LP = %d",abs(in[2]-in[0]));
       analogWrite(LP, abs(in[2]-in[0]));
       analogWrite(RP, sqrt((in[2]*in[2])+(in[0]*in[0])));
     //right
     }else{
       move(L1, L2, 1);
       move(R1, R2, in[2]>in[1] ? 1:0);
-      Serial.printf("LP = %d", abs(in[2]-in[0]));
       analogWrite(LP, sqrt((in[2]*in[2])+(in[1]*in[1])));
       analogWrite(RP, abs(in[2]-in[1]));
     }
@@ -58,20 +97,17 @@ void movement(int in[]){
     if(in[0] > in[1]){
       move(L1, L2, 0);
       move(R1, R2, in[3]>in[0] ? 0:1);
-      Serial.printf("LP = %d",abs(in[3]-in[0]));
       analogWrite(LP, abs(in[3]-in[0]));
       analogWrite(RP, sqrt((in[3]*in[3])+(in[0]*in[0])));
     //right
     }else{
       move(L1, L2, in[3]>in[1] ? 0:1);
       move(R1, R2, 0);
-      Serial.printf("LP = %d",abs(in[3]-in[1]));
       analogWrite(LP, sqrt((in[3]*in[3])+(in[1]*in[1])));
       analogWrite(RP, abs(in[3]-in[1]));
     }
   }
 }
-
 
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
