@@ -27,6 +27,11 @@ int data[4] = {0, 0, 0, 0};
 #define RS 19 //stdby right
 #define RP 21 //pwma right
 
+#define Rsensor 17
+#define Lsensor 5
+#define Csensor 35
+
+
 //bluetooth stuff
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
@@ -96,6 +101,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       std::string receivedData = pChar->getValue();
       String input = String(receivedData.c_str());
       Serial.print("Received: " + input);
+      String Lturn, Rturn, forward;
 
       switch(input[0]){
         case 'f': //feet
@@ -107,16 +113,84 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           Serial.println("inches: " + input);
           break;
         case 's': //seconds
+          forward = getSubstringUntil(input, 'f');
+          input = input.substring(forward.length()+1);
+          Lturn = getSubstringUntil(input, 'L');
+          input = input.substring(Lturn.length()+1);
+          Rturn = getSubstringUntil(input, 'R');
+          Serial.println("forward seconds: " + forward);
+          Serial.println("left turn seconds: " + Lturn);
+          Serial.println("right turn seconds: " + Rturn);
+          automatic(forward.toDouble(), Lturn.toDouble(), Rturn.toDouble());
+          break;
+        case 'd': //detect ink
+          //d1 = true, d0 = false
+          //input = input.substring(1);
+          Serial.println("input = "+ input.substring(1));
           input = input.substring(1);
-          Serial.println("seconds: " + input);
-          //move_forward(input.toDouble()); //temp
-          rotate_left(input.toDouble());
+          if(input == "0"){
+            analogWrite(LP, 0); //stop
+            analogWrite(RP, 0);
+          }
+          detect(input.toInt());
           break;
         default:
           Serial.println("Other info: " + input);
           phoneControlled(pChar); //default input-> phone controlled
       }
     }
+
+    void automatic(double seconds, double Lturn, double Rturn){
+      //forward and left = true
+      Serial.println("Running automatic...");
+
+      front_back(seconds, true); //forward
+      rotate(Lturn, true); //left
+      delay(500);
+      rotate(Rturn, false); //right
+      front_back(seconds, false); //back
+
+      Serial.println("Automatic done");
+    }
+
+    void detect(int input){
+      Serial.println("detecting...");
+      if(input == 0) return;
+      while(input == 1){
+        int R = digitalRead(Rsensor);
+        int L = digitalRead(Lsensor);
+        int C = digitalRead(Csensor);
+        if(C != 0){
+          front_back(.01, true);
+        }
+        else if((R == 0 && L == 0)){
+          front_back(.01, true); //forward
+        }
+        else if(R != 0 && L == 0){
+          rotate(.05, true); //left
+        }
+        else if(R == 0 && L != 0){
+          rotate(.05, false);//right
+        }
+        else{
+          front_back(.01, true); //forward
+        }
+        //delay(200);
+      }    
+      Serial.println("Stopping detection...");  
+    }
+
+    String getSubstringUntil(String input, char delimiter) {
+    int delimiterIndex = input.indexOf(delimiter);
+
+    if (delimiterIndex != -1) {
+      // If the delimiter is found, extract the substring until that point
+      return input.substring(1, delimiterIndex);
+    } else {
+      // If the delimiter is not found, return the entire string
+      return "";
+    }
+  }
 
     void phoneControlled(BLECharacteristic *pChar){
 
@@ -139,69 +213,43 @@ class MyCallbacks: public BLECharacteristicCallbacks {
     
 };
 
-void move_forward(double seconds){
-  
+void front_back(double seconds, bool fb){
+    //front = true, back = false
     double miliseconds = seconds*1000;
-    Serial.println("Moving Forward");
+    Serial.println(fb? "forward" : "back");
 
     digitalWrite(LS, HIGH); //high = run
     digitalWrite(RS, HIGH);
 
-    digitalWrite(L1, HIGH);
-    digitalWrite(L2, LOW);
-    digitalWrite(R1, HIGH);
-    digitalWrite(R2, LOW);
+    digitalWrite(L1, fb? HIGH : LOW);
+    digitalWrite(L2, fb? LOW : HIGH);
+    digitalWrite(R1, fb? HIGH : LOW);
+    digitalWrite(R2, fb? LOW : HIGH);
 
-    analogWrite(LP, 128); // 50% speed
-    analogWrite(RP, 128);
+    analogWrite(LP, 80); // 50% speed
+    analogWrite(RP, 80);
 
     delay(miliseconds); //run the motor for x miliseconds
     analogWrite(LP, 0); //stop
     analogWrite(RP, 0);
 
-    Serial.println("Movement Complete\n");
-
   }
 
-  void move_back(double seconds){
-
-    double miliseconds = seconds*1000;
-    Serial.println("Moving Backwards");
+  void rotate(double seconds, bool lr){
+    //left = true, right = false
+    double miliseconds = seconds*2000;
+    Serial.println(lr? "left" : "right");
 
     digitalWrite(LS, HIGH); //high = run
     digitalWrite(RS, HIGH);
 
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, HIGH);
-    digitalWrite(R1, LOW);
-    digitalWrite(R2, HIGH);
+    digitalWrite(L1, lr? LOW: HIGH);
+    digitalWrite(L2, lr? HIGH : LOW);
+    digitalWrite(R1, lr? HIGH : LOW);
+    digitalWrite(R2, lr? LOW: HIGH);
 
-    analogWrite(LP, 128); // 50% speed
-    analogWrite(RP, 128);
-
-    delay(miliseconds); //run the motor for x seconds
-    analogWrite(LP, 0); //stop
-    analogWrite(RP, 0);
-
-    Serial.println("Movement complete");
-
-  }
-
-  void rotate_left(double seconds){
-
-    double miliseconds = seconds*1000;
-    Serial.println("Rotating Left");
-
-    digitalWrite(LS, HIGH); //high = run
-    digitalWrite(RS, HIGH);
-
-    digitalWrite(L1, LOW);
-    digitalWrite(L2, HIGH);
-    digitalWrite(R1, HIGH);
-    digitalWrite(R2, LOW);
-
-    analogWrite(LP, 128); // 50% speed
-    analogWrite(RP, 128);
+    analogWrite(LP, 80); // 50% speed
+    analogWrite(RP, 80);
 
     delay(miliseconds); //run the motor for x seconds
     analogWrite(LP, 0); //stop
@@ -209,27 +257,6 @@ void move_forward(double seconds){
 
   }
 
-  void rotate_right(double seconds){
-
-    double miliseconds = seconds*1000;
-    Serial.println("Rotating Right");
-
-    digitalWrite(LS, HIGH); //high = run
-    digitalWrite(RS, HIGH);
-
-    digitalWrite(L1, HIGH);
-    digitalWrite(L2, LOW);
-    digitalWrite(R1, LOW);
-    digitalWrite(R2, HIGH);
-
-    analogWrite(LP, 128); // 50% speed
-    analogWrite(RP, 128);
-
-    delay(miliseconds); //run the motor for x seconds
-    analogWrite(LP, 0); //stop
-    analogWrite(RP, 0);
-
-  }
 
 void setup() {
 
@@ -278,6 +305,9 @@ void setup() {
   pinMode(R2,OUTPUT);
   pinMode(RS,OUTPUT);
   pinMode(RP,OUTPUT);
+  pinMode(Rsensor, INPUT);
+  pinMode(Lsensor, INPUT);
+  pinMode(Csensor, INPUT);
 
 }
 
@@ -312,6 +342,20 @@ void loop() {
 
   // digitalWrite(LS, LOW); 
   // digitalWrite(RS, LOW);
- 
-  
+
+//   int R = digitalRead(Rsensor);
+//   int L = digitalRead(Lsensor);
+//   if(R == 0 && L == 0){
+//     move_forward(.2);
+//   }
+//   else if(R != 0 && L == 0){
+//     rotate_left(.2);
+//   }
+//   else if(R == 0 && L != 0){
+//     rotate_right(.2);
+//   }
+//   else{
+//     move_forward(.2);
+//   }
+//  delay(200);
 }
