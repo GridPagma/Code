@@ -31,7 +31,6 @@ int data[4] = {0, 0, 0, 0};
 #define Lsensor 5
 #define Csensor 35
 
-
 //bluetooth stuff
 class MyServerCallbacks: public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) {
@@ -124,15 +123,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           automatic(forward.toDouble(), Lturn.toDouble(), Rturn.toDouble());
           break;
         case 'd': //detect ink
-          //d1 = true, d0 = false
-          //input = input.substring(1);
-          Serial.println("input = "+ input.substring(1));
-          input = input.substring(1);
-          if(input == "0"){
-            analogWrite(LP, 0); //stop
-            analogWrite(RP, 0);
-          }
-          detect(input.toInt());
+          detect();
           break;
         default:
           Serial.println("Other info: " + input);
@@ -153,10 +144,10 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       Serial.println("Automatic done");
     }
 
-    void detect(int input){
+    void detect(){
       Serial.println("detecting...");
-      if(input == 0) return;
-      while(input == 1){
+
+      while(1){
         int R = digitalRead(Rsensor);
         int L = digitalRead(Lsensor);
         int C = digitalRead(Csensor);
@@ -179,6 +170,14 @@ class MyCallbacks: public BLECharacteristicCallbacks {
       }    
       Serial.println("Stopping detection...");  
     }
+
+    // void stopMovement() {
+    //   digitalWrite(motor1Pin1, LOW);
+    //   digitalWrite(motor1Pin2, LOW);
+    //   digitalWrite(motor2Pin1, LOW);
+    //   digitalWrite(motor2Pin2, LOW);
+    // }
+
 
     String getSubstringUntil(String input, char delimiter) {
     int delimiterIndex = input.indexOf(delimiter);
