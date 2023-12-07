@@ -158,7 +158,7 @@ class MyCallbacks: public BLECharacteristicCallbacks {
           break;
         default:
           Serial.println("Other info: " + input);
-          //phoneControlled(pChar); //default input-> phone controlled
+          phoneControlled(pChar); //default input-> phone controlled
       }
     }
 
@@ -186,24 +186,43 @@ class MyCallbacks: public BLECharacteristicCallbacks {
         int EL = digitalRead(ELsensor);
         int SR = digitalRead(SRsensor);
         int SL = digitalRead(SLsensor);
-        if(ER == 0){
+        int inkforward = 0.05;
+        if((!ER || !EL) && !SL){ //front left of bot
+          front_back(.9, false);
+          rotate(1.2, false);
+        }
+        else if((!ER || !EL) && !SR){ //front right of bot
+          front_back(.9, false);
+          rotate(1.2, true); //turn left
+        }
+        else if(ER == 0){
          front_back(.9, false);
-         rotate(1, true); 
+         rotate(1.2, true); 
         } else if(EL == 0){
           front_back(.9, false);
-          rotate(1, true);
+          rotate(1.2, false);
+        }
+        if(SR == 0){
+          rotate(.05, true);
+          front_back(.1, true);
+        }
+        else if(SL == 0){
+          rotate(0.05, false);
+          front_back(.1, true);
         }
         if(C != 0){
           front_back(.01, true);
         }
-        else if(R == 0 && L == 0){
+        else if(R != 0 && L != 0){
           front_back(.01, true); //forward
         }
         else if((R == 0 && L != 0) || SR == 0){
-          rotate(.05, true); //left
+          rotate(.01, true);
+          front_back(.05, true); //left
         }
         else if((R != 0 && L == 0) || SL == 0){
-          rotate(.05, false);//right
+          rotate(.01, false);
+          front_back(.05, true);//right
         }
         else{
           front_back(.01, true); //forward
@@ -259,12 +278,12 @@ void front_back(double seconds, bool fb){
     digitalWrite(R1, fb? HIGH : LOW);
     digitalWrite(R2, fb? LOW : HIGH);
     if(data.X >= 0){
-    analogWrite(LP, fb? (70 + offsetY) : (70 - offsetY)); // 50% speed
-    analogWrite(RP, fb? (70 + offsetY + offsetX) : (70 - offsetY - offsetX));
+    analogWrite(LP, fb? (60 + offsetY) : (60 - offsetY)); // 50% speed
+    analogWrite(RP, fb? (60 + offsetY + offsetX) : (60 - offsetY - offsetX));
     }
     else {
-      analogWrite(LP, fb? (70 + offsetY - offsetX) : (70 - offsetY + offsetX)); // 50% speed
-      analogWrite(RP, fb? (70 + offsetY) : (70 - offsetY));
+      analogWrite(LP, fb? (60 + offsetY - offsetX) : (60 - offsetY + offsetX)); // 50% speed
+      analogWrite(RP, fb? (60 + offsetY) : (60 - offsetY));
     }
     delay(miliseconds); //run the motor for x miliseconds
     analogWrite(LP, 0); //stop
@@ -376,7 +395,7 @@ void loop() {
   data.Y = map(ay, -17000, 17000, 0, 255);
 
   Serial.print("OffsetY = ");
-  offsetY = ((data.Y - 95)/2.1);
+  offsetY = ((data.Y - 127)/2);
   Serial.print(offsetY);
   Serial.print("  Offsetx = ");
   offsetX = ((data.X - 127)/6);
